@@ -9,14 +9,14 @@ int main(int argc, char **argv) {
 
     int msg_count;
     if (rank == 0) {
-        std::cout << "请输入要处理的数字个数: ";
+        std::cout << "please input the number of messages: ";
         std::cin >> msg_count;
 
         MPI_Bcast(&msg_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
         for(int i = 0; i < msg_count; i++) {
             int val;
-            std::cout << "请输入第 " << (i+1) << " 个数字: ";
+            std::cout << "please input the " << (i+1) << "th number: ";
             std::cin >> val;
 
             if (val == 3) {
