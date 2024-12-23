@@ -1,6 +1,5 @@
 #include <mpi.h>
 #include <iostream>
-#include <vector>
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
@@ -9,34 +8,39 @@ int main(int argc, char **argv) {
 
     int msg_count;
     if (rank == 0) {
-        std::cout << "please input the number of messages: ";
-        std::cin >> msg_count;
+         // Skip program name (argv[0])
+        int count = argc - 1;
+        MPI_Bcast(&count, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-        MPI_Bcast(&msg_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-        for(int i = 0; i < msg_count; i++) {
-            int val;
-            std::cout << "please input the " << (i+1) << "th number: ";
-            std::cin >> val;
-
-            if (val == 3) {
-                val += 1;
+        // Convert all arguments at once
+        int* values = new int[count];
+        for(int i = 0; i < count; i++) {
+            values[i] = std::stoi(argv[i + 1]);
+            // Keep the special handling of number 3
+            if (values[i] == 3) {
+                values[i] += 1;
             }
-            MPI_Send(&val, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
         }
+
+        MPI_Send(values, count, MPI_INT, 1, 0, MPI_COMM_WORLD);
+        delete[] values;
     }
     else {
         MPI_Bcast(&msg_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-        for (int i = 0; i < msg_count; i++) {
-            int v;
-            MPI_Recv(&v, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            if (v % 2 == 0) {
-                std::cout << "even number\n";
+        // Receive all numbers
+        int* values = new int[msg_count];
+        MPI_Recv(values, msg_count, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        // Process all numbers
+        for(int i = 0; i < msg_count; i++) {
+            if (values[i] % 2 == 0) {
+                std::cout << values[i] << " is even\n";
             } else {
-                std::cout << "odd number\n";
+                std::cout << values[i] << " is odd\n";
             }
         }
+        delete[] values;
     }
 
     MPI_Finalize();
